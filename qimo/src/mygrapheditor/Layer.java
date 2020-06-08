@@ -63,7 +63,7 @@ public class Layer implements Serializable {
         	if(p1.paintbrush.dash) {
         		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f,PaintBrush.dash_set,0.0f);	     		
         	} else {
-        		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.JOIN_MITER,BasicStroke.JOIN_BEVEL);	  		
+        		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL);	  		
         	}
 
         	g2d.setColor(p1.paintbrush.panColor);

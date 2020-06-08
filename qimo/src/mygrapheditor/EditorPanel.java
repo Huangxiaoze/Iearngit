@@ -1,6 +1,5 @@
 package mygrapheditor;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics;
@@ -10,7 +9,6 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.util.Arrays;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -193,33 +191,32 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		g2d.dispose();
 	}
 	
-	private Position getPosition(PixPoint p1, PixPoint p2,  MouseEvent e, int size) {
+	private Position getPosition(PixPoint p1, PixPoint p2,  MouseEvent e, int offset) {
 		Position pos = Position.OUTER;
-		if (p1.paintbrush.getGraphicsType().isEditable() && size> 0) { // 元素是可以编辑的
-			isResize = true;
+		if (p1.paintbrush.getGraphicsType().isEditable()) { // 元素是可以编辑的
 			if (p1.x < e.getX() && p2.x > e.getX() && p1.y < e.getY() && p2.y > e.getY()) { // 位于内部，平移
 				pos = Position.INNER;
 			} else { // 指针位于外部
-				if (Math.abs(e.getX() - p1.x) < 25) { // 左侧
-					if (Math.abs(e.getY() - p1.y) < 50) { // 上方
+				if (Math.abs(e.getX() - p1.x) < offset/2) { // 左侧
+					if (Math.abs(e.getY() - p1.y) < offset) { // 上方
 						pos = Position.NW;
-					} else if (Math.abs(e.getY() - p2.y) < 50) { // 下方
+					} else if (Math.abs(e.getY() - p2.y) < offset) { // 下方
 						pos = Position.SW;
-					} else if (Math.abs(e.getY() - (p1.y + p2.y) / 2) < 50) { // 中间
+					} else if (Math.abs(e.getY() - (p1.y + p2.y) / 2) < offset) { // 中间
 						pos = Position.WEST;
 					}
-				} else if (Math.abs(e.getX() - p2.x) < 25) { // 右侧
-					if (Math.abs(e.getY() - p1.y) < 50) { // 上方
+				} else if (Math.abs(e.getX() - p2.x) < offset/2) { // 右侧
+					if (Math.abs(e.getY() - p1.y) < offset) { // 上方
 						pos = Position.NE;
-					} else if (Math.abs(e.getY() - p2.y) < 50) { // 下方
+					} else if (Math.abs(e.getY() - p2.y) < offset) { // 下方
 						pos = Position.SE;
-					} else if (Math.abs(e.getY() - (p1.y + p2.y) / 2) < 50) { // 中间
+					} else if (Math.abs(e.getY() - (p1.y + p2.y) / 2) < offset) { // 中间
 						pos = Position.EAST;
 					}
-				} else if (Math.abs(e.getX() - (p1.x + p2.x) / 2) < 25) { // 中间
-					if (Math.abs(e.getY() - p1.y) < 50) { // 上方
+				} else if (Math.abs(e.getX() - (p1.x + p2.x) / 2) < offset/2) { // 中间
+					if (Math.abs(e.getY() - p1.y) < offset) { // 上方
 						pos = Position.NORTH;
-					} else if (Math.abs(e.getY() - p2.y) < 50) {
+					} else if (Math.abs(e.getY() - p2.y) < offset) {
 						pos = Position.SOUTH;
 					}
 				} else {
@@ -317,8 +314,9 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 				}
 				
 			}
+			isResize = true;
 			// 获取鼠标按下点在编辑框的位置
-			Position  pos = getPosition(lefttop, rightbottom, e, elements.size());
+			Position  pos = getPosition(lefttop, rightbottom, e, 20);
 			System.out.println(pos);
 			switch(pos) {
 			case INNER:pointer = Pointer.MOVE;break;
@@ -461,10 +459,15 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 			frame.setCursor(paintbrush.getGraphicsType().getCursor());
 			return;
 		}
-		
 		PixPoint p1 = elements.get(newCreate);
 		if (p1.paintbrush.getGraphicsType().isEditable()) {
-			checkPosition(lefttop, rightbottom, e);
+			Position pos = getPosition(lefttop, rightbottom, e, 20);
+			frame.setCursor(pos.getCursor(paintbrush.getGraphicsType().getCursor()));
+			if(pos==Position.OUTER) {
+				confirmPlace = true;
+			} else {
+				confirmPlace = false;
+			}
 		} else {
 			confirmPlace = true;
 			pointer = Pointer.CREATE_NEW;
@@ -472,62 +475,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		}
 
 	}
-	private void checkPosition(PixPoint p1, PixPoint p2, MouseEvent e) {
-		if (p1.paintbrush.getGraphicsType().isEditable()) {
-			if (p1.x < e.getX() && p2.x > e.getX() && p1.y < e.getY() && p2.y > e.getY()) { // 位于内部
-				confirmPlace = false;
-				frame.setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-			} else { // 指针位于外部
-				if (Math.abs(e.getX() - p1.x) < outlineSize) { // 左侧
-					if (Math.abs(e.getY() - p1.y) < outlineSize) { // 上方
-						confirmPlace = false;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.NW_RESIZE_CURSOR));
-					} else if (Math.abs(e.getY() - p2.y) < outlineSize) { // 下方
-						// 有bug
-						confirmPlace = false;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.SW_RESIZE_CURSOR));
-					} else if (Math.abs(e.getY() - (p1.y + p2.y) / 2) < outlineSize) { // 中间
-						confirmPlace = false;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
-					} else {
-						confirmPlace = true;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					}
-				} else if (Math.abs(e.getX() - p2.x) < outlineSize) { // 右侧
-					if (Math.abs(e.getY() - p1.y) < outlineSize) { // 上方
-						confirmPlace = false;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.NE_RESIZE_CURSOR));
-					} else if (Math.abs(e.getY() - p2.y) < outlineSize) { // 下方
-						confirmPlace = false;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
-					} else if (Math.abs(e.getY() - (p1.y + p2.y) / 2) < outlineSize) { // 中间
-						confirmPlace = false;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
-					} else {
-						confirmPlace = true;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					}
-				} else if (Math.abs(e.getX() - (p1.x + p2.x) / 2) < outlineSize) { // 中间
-					if (Math.abs(e.getY() - p1.y) < 50) { // 上方
-						confirmPlace = false;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
-					} else if (Math.abs(e.getY() - p2.y) < outlineSize) {
-						confirmPlace = false;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR));
-					} else {
-						confirmPlace = true;
-						frame.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-					}
-				} else {
-					confirmPlace = true;
-					frame.setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
-				}
-			}
-		} else {
-			confirmPlace = true;
-			frame.setCursor(paintbrush.getGraphicsType().getCursor());
-		}
-	}
+
 	@Override
 	public void mouseClicked(MouseEvent e) {
 	}
