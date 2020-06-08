@@ -180,9 +180,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 
 		Graphics2D g2d = (Graphics2D) g.create();
 
-		BasicStroke size = null;
-		PixPoint p1, p2;
-
 		for (int j = 0; j < layers.size(); j++) { // 依次绘制所有图层元素
 			Layer layer = layers.get(j);
 //			System.out.println("layer " + (j + 1) + " size is " + layer.getElements().size());
@@ -194,10 +191,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 
 		// 副本用完要销毁掉
 		g2d.dispose();
-	}
-
-	private void clickElement() {
-
 	}
 	
 	private Position getPosition(PixPoint p1, PixPoint p2,  MouseEvent e, int size) {
@@ -353,7 +346,8 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		if(paintbrush.getGraphicsType().isEditable()) {
 			clickObject.add(newCreate);
 		}
-		
+//		pointer = Pointer.CREATE_NEW;
+		System.out.println("hahhahahah");
 		
 		System.out.println("newCreate = "+newCreate+", clickObject="+clickObject);
 		try {
@@ -406,13 +400,12 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 				forMove = e;
 			}
 			this.updateUI();
-			
-			
+			if (pointer != Pointer.CREATE_NEW) {
+				return;
+			}
+		}
+	
 
-		}
-		if (pointer != Pointer.CREATE_NEW) {
-			return;
-		}
 		// 生成元素的拖拽操作
 		try {
 			switch (paintbrush.graphicsType) {
@@ -459,6 +452,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
+		
 		if (!hasActive || isResize || newCreate == -1) {
 			return;
 		}
@@ -473,12 +467,9 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 			checkPosition(lefttop, rightbottom, e);
 		} else {
 			confirmPlace = true;
+			pointer = Pointer.CREATE_NEW;
 			frame.setCursor(paintbrush.getGraphicsType().getCursor());			
 		}
-		
-		
-		
-		
 
 	}
 	private void checkPosition(PixPoint p1, PixPoint p2, MouseEvent e) {
