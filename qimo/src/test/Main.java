@@ -3,18 +3,27 @@ package test;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Vector;
 
 public class Main {
 
     public static void main(String[] args) {
-    	Vector<Integer> s = new Vector<Integer>();
-    	s.add(3);
-    	s.add(0, 1);
-    	s.add(0, 2);
-    	for(Integer a: s) {
-    		System.out.println(a);
-    	}
+    	Vector<Integer> a = new Vector<Integer>() ;
+    	a.add(3);
+    	a.add(1);
+    	a.add(2);
+    	a.sort(new Comparator<Integer>() {
+
+			@Override
+			public int compare(Integer o1, Integer o2) {
+				return o1.compareTo(o2);
+			}
+    		
+    	});
+    	a.remove((Integer)3);
+    	System.out.println(a);
+    	System.out.println(Math.);
     	
         /*
          * 在 AWT 的事件队列线程中创建窗口和组件, 确保线程安全,
