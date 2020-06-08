@@ -22,7 +22,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 	PaintBrush paintbrush = new PaintBrush();
 	public static int newCreate = -1; // 新建元素的起始坐标
 	int editObj = -1; // Ctrl+鼠标左键选中的对象
-	int copy = -1; // 复制
+	; // 复制
 	private boolean mouse_Released = true; // 监测鼠标是否放下，控制虚线框的显示
 	private boolean confirmPlace = true; // 元素确认放下
 	int outlineSize = 10; // 鼠标进入边界多少距离,变化鼠标
@@ -583,14 +583,14 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 	public void keyTyped(KeyEvent e) {
 
 	}
-
+	Vector<PixPoint> copy = new Vector<PixPoint>();
 	@Override
 	public void keyPressed(KeyEvent e) {
+		System.out.println(e);
 		if (!hasActive) {
 			return;
 		}
 		Vector<PixPoint> elements = layers.get(activeLayer).getElements();
-//		System.out.println(e);
 		keyCode = e.getKeyCode();
 		if (keyCode == 16) { // ctrl键
 			if (paintbrush.getGraphicsType() == Shape.SQUARE) {
@@ -611,30 +611,34 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 					}
 				}
 			} else if (keyCode == 67) { // C
-				copy = newCreate;
-			} else if (keyCode == 86) { // V
-				if (!elements.isEmpty() && copy >= 0) {
-					PixPoint p1 = elements.get(copy); // 此处可以考虑重载clone
-					if (p1.paintbrush.getGraphicsType().isEditable()) {
-						PixPoint p2 = elements.get(copy + 1);
-						try {
-							int offset = -50;
-							p1 = (PixPoint) p1.clone();
-							p2 = (PixPoint) p2.clone();
-							int deltax = p2.x - p1.x;
-							int deltay = p2.y - p1.y;
-							p1.move(p1.x + offset, p1.y + offset);
-							p2.move(p1.x + deltax, p1.y + deltay);
-							elements.add(new PixPoint(-1, -1, paintbrush.panColor, Shape.CUT, paintbrush.panSize,
-									paintbrush.dash));
-							elements.add(copy, (PixPoint) p2.clone());
-							elements.add(copy, (PixPoint) p1.clone());
-						} catch (CloneNotSupportedException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-						this.updateUI();
+				copy = new Vector<PixPoint>();
+				PixPoint p1 = null, p2 = null;
+				int offset = -50;
+				for(Integer c: clickObject) {
+
+					try {
+						p1 = (PixPoint) elements.get(c).clone();
+						p2 = (PixPoint) elements.get(c+1).clone();
+						
+					} catch (CloneNotSupportedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
 					}
+					int deltax = p2.x - p1.x;
+					int deltay = p2.y - p1.y;
+					p1.move(p1.x + offset, p1.y + offset);
+					p2.move(p1.x + deltax, p1.y + deltay);
+					
+					copy.add(p1);
+					copy.add(p2);
+					copy.add(new PixPoint(-1, -1, paintbrush.panColor, Shape.CUT, paintbrush.panSize,
+							paintbrush.dash));				
+				}
+			} else if (keyCode == 86) { // V
+				System.out.println("???"+copy);
+				if(copy!=null&&copy.size()!=0) {
+					elements.addAll(copy);
+					this.updateUI();
 				}
 			} else if (keyCode == 90) { // Z
 				Layer layer = layers.get(activeLayer);
@@ -650,6 +654,139 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 				} else {
 					frame.saveFile(frame.openFilePath);
 				}
+			} else if (keyCode == 38) { // 上箭头
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					PixPoint p2 = elements.get(c+1);
+					int deltax = p2.x - p1.x;
+					int deltay = p2.y - p1.y;
+					p1.move(p1.x, lefttop.y);
+					p2.move(p1.x + deltax, p1.y + deltay);				
+				}	
+				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p2 = elements.get(c+1);
+					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
+				}
+				this.updateUI();
+			} else if (keyCode == 40) { // 下箭头
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					PixPoint p2 = elements.get(c+1);
+					int deltax = p2.x - p1.x;
+					int deltay = p2.y - p1.y;
+					
+					p1.move(p1.x, rightbottom.y - deltay);
+					p2.move(p1.x + deltax, p1.y + deltay);				
+				}	
+				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
+				}
+				this.updateUI();			
+			} else if (keyCode==37) {// 左箭头
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					PixPoint p2 = elements.get(c+1);
+					int deltax = p2.x - p1.x;
+					int deltay = p2.y - p1.y;
+					
+					p1.move(lefttop.x, p1.y);
+					p2.move(p1.x + deltax, p1.y + deltay);				
+				}	
+				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p2 = elements.get(c+1);
+					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
+				}
+				this.updateUI();				
+			} else if (keyCode == 39) {
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					PixPoint p2 = elements.get(c+1);
+					int deltax = p2.x - p1.x;
+					int deltay = p2.y - p1.y;
+					
+					p1.move(rightbottom.x-deltax, p1.y);
+					p2.move(p1.x + deltax, p1.y + deltay);				
+				}	
+				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
+				}
+				this.updateUI();			
+			} else if (keyCode==96) {
+				for(Integer c: clickObject) {   // 0
+					PixPoint p1 = elements.get(c);
+					PixPoint p2 = elements.get(c+1);
+					int deltax = p2.x - p1.x;
+					int deltay = p2.y - p1.y;
+					int x = (lefttop.x+rightbottom.x)/2;
+					int y = (lefttop.y+rightbottom.y)/2;
+					
+					p1.move(p1.x, y - deltay/2 );
+					p2.move(p1.x + deltax, p1.y + deltay);				
+				}	
+				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
+				}
+				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p2 = elements.get(c+1);
+					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
+				}			
+				this.updateUI();				
+			} else if (keyCode == 97) { // 1
+				for(Integer c: clickObject) {   // 0
+					PixPoint p1 = elements.get(c);
+					PixPoint p2 = elements.get(c+1);
+					int deltax = p2.x - p1.x;
+					int deltay = p2.y - p1.y;
+					int x = (lefttop.x+rightbottom.x)/2;
+					int y = (lefttop.y+rightbottom.y)/2;
+					
+					p1.move(x-deltax/2, p1.y );
+					p2.move(p1.x + deltax, p1.y + deltay);				
+				}	
+				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
+				}
+				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p2 = elements.get(c+1);
+					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
+				}			
+				this.updateUI();			
+			} else if(keyCode==101) { // 空格
+				
+				for(Integer c: clickObject) {   // 0
+					PixPoint p1 = elements.get(c);
+					PixPoint p2 = elements.get(c+1);
+					int deltax = p2.x - p1.x;
+					int deltay = p2.y - p1.y;
+					int x = (lefttop.x+rightbottom.x)/2;
+					int y = (lefttop.y+rightbottom.y)/2;
+					
+					p1.move(x-deltax/2, y-deltay/2 );
+					p2.move(p1.x + deltax, p1.y + deltay);				
+				}	
+				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p1 = elements.get(c);
+					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
+				}
+				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
+				for(Integer c: clickObject) {
+					PixPoint p2 = elements.get(c+1);
+					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
+				}			
+				this.updateUI();			
 			}
 		}
 	}
