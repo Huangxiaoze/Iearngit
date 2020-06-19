@@ -55,6 +55,51 @@ public class Layer implements Serializable {
         BasicStroke size = null;
         PixPoint p1, p2;
         int newCreate = 0;
+        
+        // 先绘制填充色
+        for(int i=0;i<elements.size()-1;i++) {
+        	
+        	p1 = elements.get(i);
+        	p2 = elements.get(i+1);
+        	
+        	if(p1.paintbrush.dash) {
+        		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f,PaintBrush.dash_set,0.0f);	     		
+        	} else {
+        		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL);	  		
+        	}
+
+        	g2d.setColor(p1.paintbrush.panColor);
+        	g2d.setStroke(size);
+        	
+        	switch(p1.paintbrush.graphicsType) {
+        	case SQUARE:     	
+        	case RECTANGLE:
+        		g2d.rotate(p1.paintbrush.rotateAngle, (p1.x+p2.x)/2, (p1.y+p2.y)/2);
+        		// 绘制填充色
+        		g2d.setColor(p1.paintbrush.fillColor);
+        		g2d.fillRect(p1.x, p1.y, Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
+        		g2d.rotate(-p1.paintbrush.rotateAngle, (p1.x+p2.x)/2, (p1.y+p2.y)/2);
+        		break;
+        	case CIRCLE:case OVAL:
+        		g2d.rotate(p1.paintbrush.rotateAngle, (p1.x+p2.x)/2, (p1.y+p2.y)/2);
+        		// 绘制填充色
+        		g2d.setColor(p1.paintbrush.fillColor);       		
+        		g2d.fillArc(p1.x, p1.y, Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y), 0, 360);
+        		g2d.rotate(-p1.paintbrush.rotateAngle, (p1.x+p2.x)/2, (p1.y+p2.y)/2);        		
+        		break;
+        	default:
+        		break;
+        	}
+        	
+        	switch(p1.paintbrush.graphicsType) {
+        	case SQUARE:case RECTANGLE:
+        	case CIRCLE:case OVAL:
+        		i++;
+        		break;
+        	}
+        }
+        
+        // 后绘制边框
         for(int i=0;i<elements.size()-1;i++) {
         	
         	p1 = elements.get(i);
@@ -78,9 +123,6 @@ public class Layer implements Serializable {
         	case SQUARE:     	
         	case RECTANGLE:
         		g2d.rotate(p1.paintbrush.rotateAngle, (p1.x+p2.x)/2, (p1.y+p2.y)/2);
-        		// 绘制填充色
-        		g2d.setColor(p1.paintbrush.fillColor);
-        		g2d.fillRect(p1.x, p1.y, Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
         		// 绘制边框
         		g2d.setColor(p1.paintbrush.panColor);
         		g2d.drawRect(p1.x, p1.y, Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y));
@@ -88,9 +130,6 @@ public class Layer implements Serializable {
         		break;
         	case CIRCLE:case OVAL:
         		g2d.rotate(p1.paintbrush.rotateAngle, (p1.x+p2.x)/2, (p1.y+p2.y)/2);
-        		// 绘制填充色
-        		g2d.setColor(p1.paintbrush.fillColor);       		
-        		g2d.fillArc(p1.x, p1.y, Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y), 0, 360);
         		// 绘制边框
         		g2d.setColor(p1.paintbrush.panColor);
         		g2d.drawArc(p1.x, p1.y, Math.abs(p1.x - p2.x), Math.abs(p1.y - p2.y), 0, 360);

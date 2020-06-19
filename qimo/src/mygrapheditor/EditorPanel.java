@@ -9,6 +9,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Comparator;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -42,8 +43,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
 		rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
 
-		
-		
 		this.setBackground(Color.white);
 		this.frame = frame;
 		layers = new Vector<Layer>();
@@ -55,17 +54,36 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		this.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
 		setFocusable(true);
 	}
-
+	public void decreasePanSize() {
+		paintbrush.decreasePanSize();
+		for(Integer c: clickObject) {
+			PixPoint p1 = layers.get(activeLayer).getElements().get(c);
+			PixPoint p2 = layers.get(activeLayer).getElements().get(c+1);
+			p1.paintbrush.setPanSize(paintbrush.getPanSize());
+		}
+		this.updateUI();
+	}
+	public void raisePanSize() {
+		paintbrush.raisePanSize();
+		for(Integer c: clickObject) {
+			PixPoint p1 = layers.get(activeLayer).getElements().get(c);
+			PixPoint p2 = layers.get(activeLayer).getElements().get(c+1);
+			p1.paintbrush.setPanSize(paintbrush.getPanSize());
+		}
+		this.updateUI();
+	}
+	
 	public void setFillColor(Color fillColor) {
 		this.paintbrush.setFillColor(fillColor);
-		if (newCreate == -1) {
+		if (!hasActive) {
 			return;
 		}
-		PixPoint target = layers.get(activeLayer).getElements().get(newCreate);
-		if (target.paintbrush.getGraphicsType().isEditable()) {
+		Vector<PixPoint> elements = layers.get(activeLayer).getElements();
+		for(Integer c: clickObject) {
+			PixPoint target = elements.get(c);
 			target.paintbrush.setFillColor(fillColor);
-			this.updateUI();
 		}
+		this.updateUI();
 	}
 
 	/*
@@ -274,9 +292,9 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 					confirmPlace = false; // 设置为元素未放下状态		
 					newCreate = editObj;
 					System.out.println("clickObject:"+clickObject+"elements.size"+elements.size());
-					for(int i=0;i<clickObject.size();i++) {
-						System.out.println(elements.get(clickObject.get(i)));
-					}
+//					for(int i=0;i<clickObject.size();i++) {
+//						System.out.println(elements.get(clickObject.get(i)));
+//					}
 					System.out.println("----------");
 					// 更新包含所有编辑元素的矩形编辑框，左上角，右下角
 					for(int i=0;i<clickObject.size();i++) {
@@ -392,9 +410,19 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		if (!confirmPlace) {
 			if (elements.size() > 0) {		
 				isResize = true;
-				Operation oper = OperationFactory.getOperation(pointer);
+				
+				/* 简单工厂模式 */
+				/*
+				Operation oper = OperationFactory.createOperation(pointer);
 				oper.set(e, forMove, lefttop, rightbottom, clickObject, elements);	
 				oper.action();
+				*/
+				
+				/* 策略模式*/
+				Context context = new Context(pointer);
+				context.set(e, forMove, lefttop, rightbottom, clickObject, elements, keyCode);	
+				context.run();
+	
 				forMove = e;
 			}
 			this.updateUI();
@@ -534,209 +562,15 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 	Vector<PixPoint> copy = new Vector<PixPoint>();
 	@Override
 	public void keyPressed(KeyEvent e) {
-		System.out.println(e);
+//		System.out.println(e);
 		if (!hasActive) {
 			return;
 		}
-		Vector<PixPoint> elements = layers.get(activeLayer).getElements();
 		keyCode = e.getKeyCode();
-		if (keyCode == 16) { // ctrl键
-			if (paintbrush.getGraphicsType() == Shape.SQUARE) {
-				paintbrush.setGraphicsType(Shape.RECTANGLE);
-			} else if (paintbrush.getGraphicsType() == Shape.CIRCLE) {
-				paintbrush.setGraphicsType(Shape.OVAL);
-			}
-		}
-		if (e.getModifiers() == 2) { // Ctrl
-			if (keyCode == 68) { // D
-				if (!elements.isEmpty() && newCreate >= 0) {
-					PixPoint p1 = elements.get(newCreate);
-					if (p1.paintbrush.getGraphicsType().isEditable()) {
-						elements.remove(newCreate + 1);
-						elements.remove(newCreate);
-						this.place();
-						this.updateUI();
-					}
-				}
-			} else if (keyCode == 67) { // C
-				copy = new Vector<PixPoint>();
-				PixPoint p1 = null, p2 = null;
-				int offset = -50;
-				for(Integer c: clickObject) {
-
-					try {
-						p1 = (PixPoint) elements.get(c).clone();
-						p2 = (PixPoint) elements.get(c+1).clone();
-						
-					} catch (CloneNotSupportedException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-					int deltax = p2.x - p1.x;
-					int deltay = p2.y - p1.y;
-					p1.move(p1.x + offset, p1.y + offset);
-					p2.move(p1.x + deltax, p1.y + deltay);
-					
-					copy.add(p1);
-					copy.add(p2);
-					copy.add(new PixPoint(-1, -1, paintbrush.panColor, Shape.CUT, paintbrush.panSize,
-							paintbrush.dash));				
-				}
-			} else if (keyCode == 86) { // V
-				System.out.println("???"+copy);
-				if(copy!=null&&copy.size()!=0) {
-					elements.addAll(copy);
-					this.updateUI();
-				}
-			} else if (keyCode == 90) { // Z
-				Layer layer = layers.get(activeLayer);
-				int start = newCreate;
-				if (pointer == Pointer.CREATE_NEW) {
-					place();
-					layer.removeElementFrom(start);
-					this.updateUI();
-				}
-			} else if (keyCode == 83) { // S
-				if (frame.openFilePath == null) {
-					frame.dump();
-				} else {
-					frame.saveFile(frame.openFilePath);
-				}
-			} else if (keyCode == 38) { // 上箭头
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					PixPoint p2 = elements.get(c+1);
-					int deltax = p2.x - p1.x;
-					int deltay = p2.y - p1.y;
-					p1.move(p1.x, lefttop.y);
-					p2.move(p1.x + deltax, p1.y + deltay);				
-				}	
-				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p2 = elements.get(c+1);
-					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
-				}
-				this.updateUI();
-			} else if (keyCode == 40) { // 下箭头
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					PixPoint p2 = elements.get(c+1);
-					int deltax = p2.x - p1.x;
-					int deltay = p2.y - p1.y;
-					
-					p1.move(p1.x, rightbottom.y - deltay);
-					p2.move(p1.x + deltax, p1.y + deltay);				
-				}	
-				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
-				}
-				this.updateUI();			
-			} else if (keyCode==37) {// 左箭头
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					PixPoint p2 = elements.get(c+1);
-					int deltax = p2.x - p1.x;
-					int deltay = p2.y - p1.y;
-					
-					p1.move(lefttop.x, p1.y);
-					p2.move(p1.x + deltax, p1.y + deltay);				
-				}	
-				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p2 = elements.get(c+1);
-					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
-				}
-				this.updateUI();				
-			} else if (keyCode == 39) {
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					PixPoint p2 = elements.get(c+1);
-					int deltax = p2.x - p1.x;
-					int deltay = p2.y - p1.y;
-					
-					p1.move(rightbottom.x-deltax, p1.y);
-					p2.move(p1.x + deltax, p1.y + deltay);				
-				}	
-				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
-				}
-				this.updateUI();			
-			} else if (keyCode==96) {
-				for(Integer c: clickObject) {   // 0
-					PixPoint p1 = elements.get(c);
-					PixPoint p2 = elements.get(c+1);
-					int deltax = p2.x - p1.x;
-					int deltay = p2.y - p1.y;
-					int x = (lefttop.x+rightbottom.x)/2;
-					int y = (lefttop.y+rightbottom.y)/2;
-					
-					p1.move(p1.x, y - deltay/2 );
-					p2.move(p1.x + deltax, p1.y + deltay);				
-				}	
-				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
-				}
-				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p2 = elements.get(c+1);
-					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
-				}			
-				this.updateUI();				
-			} else if (keyCode == 97) { // 1
-				for(Integer c: clickObject) {   // 0
-					PixPoint p1 = elements.get(c);
-					PixPoint p2 = elements.get(c+1);
-					int deltax = p2.x - p1.x;
-					int deltay = p2.y - p1.y;
-					int x = (lefttop.x+rightbottom.x)/2;
-					int y = (lefttop.y+rightbottom.y)/2;
-					
-					p1.move(x-deltax/2, p1.y );
-					p2.move(p1.x + deltax, p1.y + deltay);				
-				}	
-				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
-				}
-				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p2 = elements.get(c+1);
-					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
-				}			
-				this.updateUI();			
-			} else if(keyCode==101) { // 空格
-				
-				for(Integer c: clickObject) {   // 0
-					PixPoint p1 = elements.get(c);
-					PixPoint p2 = elements.get(c+1);
-					int deltax = p2.x - p1.x;
-					int deltay = p2.y - p1.y;
-					int x = (lefttop.x+rightbottom.x)/2;
-					int y = (lefttop.y+rightbottom.y)/2;
-					
-					p1.move(x-deltax/2, y-deltay/2 );
-					p2.move(p1.x + deltax, p1.y + deltay);				
-				}	
-				lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p1 = elements.get(c);
-					lefttop.move(Math.min(lefttop.x, p1.x), Math.min(p1.y, lefttop.y));
-				}
-				rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
-				for(Integer c: clickObject) {
-					PixPoint p2 = elements.get(c+1);
-					rightbottom.move(Math.max(p2.x, rightbottom.x), Math.max(p2.y, rightbottom.y));
-				}			
-				this.updateUI();			
-			}
-		}
+		Vector<PixPoint> elements = layers.get(activeLayer).getElements();
+		KeyBoardContext context = new KeyBoardContext(e);
+		context.set(e, lefttop, rightbottom, clickObject, elements, paintbrush, newCreate, frame, this, elements, activeLayer, layers, pointer);
+		context.run();
 	}
 
 	@Override

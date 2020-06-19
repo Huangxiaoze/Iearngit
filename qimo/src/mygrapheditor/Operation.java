@@ -1,14 +1,15 @@
 package mygrapheditor;
 
+import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.util.Vector;
 
 /*
- * 策略模式 + 静态工厂模式
+ * 静态工厂模式
  */
 
 class OperationFactory {
-	public static Operation getOperation(Pointer pointer) {
+	public static Operation createOperation(Pointer pointer) {
 		switch (pointer) {
 		case MOVE: return new Move();
 		case NW_RESIZE: return new NWResize();
@@ -25,8 +26,26 @@ class OperationFactory {
 	}
 }
 
+/*
+ * 策略模式
+ */
+class Context {
+	private Operation oper = null;
+	public Context(Pointer pointer) {
+		oper = OperationFactory.createOperation(pointer);
+	}
+	public void set(MouseEvent e, MouseEvent forMove, PixPoint lefttop, PixPoint rightbottom, Vector<Integer> clickObject,
+			Vector<PixPoint> elements, int keyCode) {
+		oper.set(e, forMove, lefttop, rightbottom, clickObject,elements, keyCode);
+		
+	}
+	public void run() {
+		oper.action();
+	}
+	
+}
 
-public class Operation {
+abstract public class Operation {
 	MouseEvent e;
 	MouseEvent forMove;
 	PixPoint lefttop;
@@ -36,9 +55,10 @@ public class Operation {
 	PixPoint p1 = null;
 	PixPoint p2 = null;
 	int deltax, deltay;
+	int keyCode;
 	public Operation() {}
 	public Operation(MouseEvent e, MouseEvent forMove, PixPoint lefttop, PixPoint rightbottom,
-			Vector<Integer> clickObject, Vector<PixPoint> elements) {
+			Vector<Integer> clickObject, Vector<PixPoint> elements, int keyCode) {
 		super();
 		this.e = e;
 		this.forMove = forMove;
@@ -46,28 +66,28 @@ public class Operation {
 		this.rightbottom = rightbottom;
 		this.clickObject = clickObject;
 		this.elements = elements;
+		this.keyCode = keyCode;
 	}
 
 	public void set(MouseEvent e, MouseEvent forMove, PixPoint lefttop, PixPoint rightbottom, Vector<Integer> clickObject,
-			Vector<PixPoint> elements) {
+			Vector<PixPoint> elements, int keyCode) {
 		this.e = e;
 		this.forMove = forMove;
 		this.lefttop = lefttop;
 		this.rightbottom = rightbottom;
 		this.clickObject = clickObject;
 		this.elements = elements;
+		this.keyCode = keyCode;
 	}
 	
-	public void action() {
-		System.out.println("do nothing....");
-	}
+	abstract public void action();
 }
 
 class Move extends Operation {
 	public Move() {}
 	public Move(MouseEvent e, MouseEvent forMove, PixPoint lefttop, PixPoint rightbottom, Vector<Integer> clickObject,
-			Vector<PixPoint> elements) {
-		super(e, forMove, lefttop, rightbottom, clickObject, elements);
+			Vector<PixPoint> elements, int keyCode) {
+		super(e, forMove, lefttop, rightbottom, clickObject, elements, keyCode);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -89,13 +109,28 @@ class Move extends Operation {
 class NWResize extends Operation {
 	@Override
 	public void action() {
+		PixPoint lefttop1 = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
 		deltax = e.getX() - lefttop.x;
 		deltay = e.getY() - lefttop.y;
+		int increment = deltax;
 		for(Integer c: clickObject) {
 			p1 = elements.get(c);
-			p1.move(p1.x + deltax, p1.y + deltay);
+			p2 = elements.get(c+1);
+			int x = p2.x - p1.x;
+			int y = p2.y - p1.y;
+			if(keyCode==16) { // 按下了shift键
+				int x1 = p2.x - (p1.x + increment);
+				p1.move(p1.x + increment, p2.y - x1*y/x);
+				lefttop1.move(Math.min(p1.x, lefttop1.x), Math.min(p1.y, lefttop1.y));
+			} else {
+				p1.move(p1.x + deltax, p1.y + deltay);
+			}
 		}
-		lefttop.move(e.getX(), e.getY());
+		if(keyCode==16) {
+			lefttop.move(lefttop1.x, lefttop1.y);
+		} else {
+			lefttop.move(e.getX(), e.getY());
+		}
 	}
 }
 
@@ -103,15 +138,34 @@ class SWResize extends Operation {
 	public void action() {
 		deltax = e.getX() - lefttop.x;
 		deltay = e.getY() - rightbottom.y;
-
+		
+		int increment = deltax;
+		int min = 2000;
+		int max = -2000;
 		for(Integer c: clickObject) {
 			p1 = elements.get(c);
 			p2 = elements.get(c + 1);
-			p1.move(p1.x + deltax, p1.y);
-			p2.move(p2.x, p2.y + deltay);
+			int x = p2.x - p1.x;
+			int y = p2.y - p1.y;
+	
+			if(keyCode==16) { // 按下了shift键
+				int x1 = p2.x - (p1.x + increment);	
+				p1.move(p1.x + increment, p1.y);
+				p2.move(p2.x, p1.y + x1*y/x);
+				min = Math.min(p1.x, min);
+				max = Math.max(p2.y, max);
+			} else {
+				p1.move(p1.x + deltax, p1.y);
+				p2.move(p2.x, p2.y + deltay);
+			}
 		}
-		lefttop.move(e.getX(), lefttop.y);
-		rightbottom.move(rightbottom.x, e.getY());
+		if(keyCode==16) {
+			lefttop.move(min, lefttop.y);
+			rightbottom.move(rightbottom.x, max);		
+		} else {
+			lefttop.move(e.getX(), lefttop.y);
+			rightbottom.move(rightbottom.x, e.getY());
+		}
 	}
 }
 
@@ -120,9 +174,13 @@ class WResize extends Operation {
 		deltax = e.getX() - lefttop.x;
 		for(Integer c: clickObject) {
 			p1 = elements.get(c);
+			p2 = elements.get(c + 1);
+
 			p1.move(p1.x+deltax, p1.y);
 		}				
+
 		lefttop.move(e.getX(), lefttop.y);
+
 	}
 }
 

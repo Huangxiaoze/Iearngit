@@ -22,6 +22,12 @@ public class PaintBrush implements Serializable, Cloneable {
 		this.panSize = size;
 		this.dash = dash;
 	}
+	public int getPanSize() {
+		return this.panSize;
+	}
+	public void setPanSize(int s) {
+		this.panSize = s;
+	}
 	
 	public PaintBrush() {
 		// TODO Auto-generated constructor stub

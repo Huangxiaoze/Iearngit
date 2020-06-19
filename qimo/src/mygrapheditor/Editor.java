@@ -54,6 +54,7 @@ public class Editor extends JFrame implements ActionListener {
 		this.init();
 	}
 	
+	
 	private void init() { // 界面初始化
 		initMenu();
 		initToolBar();
@@ -321,10 +322,10 @@ public class Editor extends JFrame implements ActionListener {
 			btn.setBackground(newColor);
 			
 		} else if (e.getActionCommand().equals("raisePanSize")) {
-			drawingBoard.paintbrush.raisePanSize();
+			drawingBoard.raisePanSize();
 			
 		} else if (e.getActionCommand().equals("decreasePanSize")) {
-			drawingBoard.paintbrush.decreasePanSize();
+			drawingBoard.decreasePanSize();
 			
 		} else if (e.getActionCommand().equals("dashControl")) {
 			JMenuItem dash = (JMenuItem) e.getSource();
