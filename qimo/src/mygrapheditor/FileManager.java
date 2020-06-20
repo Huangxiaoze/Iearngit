@@ -17,7 +17,7 @@ public class FileManager {
 	private static ObjectInputStream inObjectInputStream = null;
 	private static ObjectOutputStream outObjectOutputStream = null;
 
-	public Vector<Layer> loadFile(String path) {
+	public static Vector<Layer> loadFile(String path) {
 		try {
 
 			File file = new File(path);
@@ -38,4 +38,20 @@ public class FileManager {
 		return null;
 
 	}
+	
+	public static void saveFile(String path, Vector<Layer> layers) {
+		try {
+			File file = new File(path);
+			outFileOutputStream = new FileOutputStream(file);
+			outObjectOutputStream = new ObjectOutputStream(outFileOutputStream); 
+			outObjectOutputStream.writeObject(layers);  // 将图形对象导出到文件
+			outFileOutputStream.close();
+			outObjectOutputStream.close();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		}catch (IOException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
 }

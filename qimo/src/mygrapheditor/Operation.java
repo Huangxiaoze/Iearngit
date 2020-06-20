@@ -69,7 +69,8 @@ abstract public class Operation {
 		this.keyCode = keyCode;
 	}
 
-	public void set(MouseEvent e, MouseEvent forMove, PixPoint lefttop, PixPoint rightbottom, Vector<Integer> clickObject,
+	public void set(MouseEvent e, MouseEvent forMove, PixPoint lefttop, 
+			PixPoint rightbottom, Vector<Integer> clickObject,
 			Vector<PixPoint> elements, int keyCode) {
 		this.e = e;
 		this.forMove = forMove;
@@ -85,11 +86,6 @@ abstract public class Operation {
 
 class Move extends Operation {
 	public Move() {}
-	public Move(MouseEvent e, MouseEvent forMove, PixPoint lefttop, PixPoint rightbottom, Vector<Integer> clickObject,
-			Vector<PixPoint> elements, int keyCode) {
-		super(e, forMove, lefttop, rightbottom, clickObject, elements, keyCode);
-		// TODO Auto-generated constructor stub
-	}
 	
 	@Override
 	public void action() {

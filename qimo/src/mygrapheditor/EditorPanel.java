@@ -17,11 +17,10 @@ import javax.swing.JPanel;
 
 //画板类
 public class EditorPanel extends JPanel implements MouseListener, MouseMotionListener, KeyListener {
-
-	PaintBrush paintbrush = new PaintBrush();
-	public static int newCreate = -1; // 新建元素的起始坐标
-	int editObj = -1; // Ctrl+鼠标左键选中的对象
-	; // 复制
+	
+	
+	PaintBrush paintbrush = new PaintBrush(); // 画笔
+	public static int newCreate = -1; // 新建元素的在编辑图层中的位置
 	private boolean mouse_Released = true; // 监测鼠标是否放下，控制虚线框的显示
 	private boolean confirmPlace = true; // 元素确认放下
 	int outlineSize = 10; // 鼠标进入边界多少距离,变化鼠标
@@ -31,13 +30,13 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 	int keyCode = -1; // 记录键盘的键值
 	public static float[] dash_set = new float[] { 5, 10 }; // 虚线
 	private int activeLayer = 0; // 当前操作的图层
-	private boolean hasActive = true;
-	// 图层元素集合
-	private Vector<Layer> layers;
-
-	// 父元素
-	private final Editor frame;
-
+	private boolean hasActive = true;// 标记此时时候有图层可以编辑
+	private Vector<Layer> layers;// 图层元素集合
+	private final Editor frame;// 父元素
+	Vector<Integer> clickObject = new Vector<Integer>();// 选中多个对象
+	PixPoint lefttop; // 选中元素编辑框的左上角
+	PixPoint rightbottom; // 选中元素编辑框的右下角
+	
 	// 构造器
 	public EditorPanel(Editor frame) {
 		lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
@@ -54,11 +53,29 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		this.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
 		setFocusable(true);
 	}
+	
+	public void setPanColor(Color newColor) {
+		this.paintbrush.setPanColor(newColor);
+		for(Integer c: clickObject) {
+			PixPoint p1 = layers.get(activeLayer).getElements().get(c);
+			p1.paintbrush.setPanColor(newColor);	
+		}
+		this.updateUI();
+	}
+	
+	public void setDash(boolean b) {
+		this.paintbrush.setDash(b);
+		for(Integer c: clickObject) {
+			PixPoint p1 = layers.get(activeLayer).getElements().get(c);
+			p1.paintbrush.setDash(b);	
+		}
+		this.updateUI();
+	}
+	
 	public void decreasePanSize() {
 		paintbrush.decreasePanSize();
 		for(Integer c: clickObject) {
 			PixPoint p1 = layers.get(activeLayer).getElements().get(c);
-			PixPoint p2 = layers.get(activeLayer).getElements().get(c+1);
 			p1.paintbrush.setPanSize(paintbrush.getPanSize());
 		}
 		this.updateUI();
@@ -67,7 +84,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		paintbrush.raisePanSize();
 		for(Integer c: clickObject) {
 			PixPoint p1 = layers.get(activeLayer).getElements().get(c);
-			PixPoint p2 = layers.get(activeLayer).getElements().get(c+1);
 			p1.paintbrush.setPanSize(paintbrush.getPanSize());
 		}
 		this.updateUI();
@@ -87,15 +103,16 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 	}
 
 	/*
-	 * 客户端更改图形
+	 * 模拟图形放下操作
 	 */
-	public void place() { // 模拟图形放下操作
+	public void place() { 
 		lefttop = new PixPoint(2000, 2000, Color.RED, Shape.RECTANGLE, 2, true);
 		rightbottom = new PixPoint(-2000, -2000, Color.RED, Shape.RECTANGLE, 2, true);
 		newCreate = -1;
 		confirmPlace = true;
 		isResize = false;
 		pointer = Pointer.CREATE_NEW;
+		System.out.println("??/");
 		this.updateUI();
 	}
 
@@ -159,12 +176,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 				activeLayer = l;
 				hasActive = true;
 			}
-		} else { // 操作非活跃图层
-			if (s == false) { // 隐藏，啥也不做
-
-			} else { // 显示，如果
-
-			}
 		}
 		this.updateUI();
 	}
@@ -189,6 +200,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		return layers;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void paintComponent(Graphics g) {
 
@@ -198,7 +210,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 
 		for (int j = 0; j < layers.size(); j++) { // 依次绘制所有图层元素
 			Layer layer = layers.get(j);
-//			System.out.println("layer " + (j + 1) + " size is " + layer.getElements().size());
 			boolean drawframe = mouse_Released && j == activeLayer&&newCreate!=-1;
 			if (layer.isActive()) {
 				layer.draw(g2d, g, drawframe, (Vector<Integer>)clickObject.clone(), lefttop, rightbottom);
@@ -243,23 +254,17 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 			}
 
 		}
-		
 		return pos;
 	}
 	
-	// 选中多个对象
-	Vector<Integer> clickObject = new Vector<Integer>();
-	PixPoint lefttop;
-	PixPoint rightbottom;
 	@Override
 	public void mousePressed(MouseEvent e) {
-		System.out.println("mousePressed "+confirmPlace+" isResize="+isResize);		
 		if (!hasActive) {return;}
 		forMove = e;
 		Vector<PixPoint> elements = layers.get(activeLayer).getElements();
 
 		if (keyCode == 17 || paintbrush.getGraphicsType() == Shape.FILLCOLOR) { // 按下了Ctrl键, 编辑; 或者处于填充颜色模式
-			editObj = -1;
+			int editObj = -1; // Ctrl+鼠标左键选中的对象
 			PixPoint p1 = null;
 			PixPoint p2 =null;
 			// 查看是否有可编辑的元素包含该点
@@ -274,7 +279,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 				}
 				i++;
 			}
-			
 			
 			if (paintbrush.getGraphicsType() == Shape.FILLCOLOR) {// 处于填充颜色模式
 				if (editObj != -1) { // 有元素包含该点
@@ -291,10 +295,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 					}
 					confirmPlace = false; // 设置为元素未放下状态		
 					newCreate = editObj;
-					System.out.println("clickObject:"+clickObject+"elements.size"+elements.size());
-//					for(int i=0;i<clickObject.size();i++) {
-//						System.out.println(elements.get(clickObject.get(i)));
-//					}
 					System.out.println("----------");
 					// 更新包含所有编辑元素的矩形编辑框，左上角，右下角
 					for(int i=0;i<clickObject.size();i++) {
@@ -303,7 +303,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 							p1 = (PixPoint) elements.get(clickObject.get(i)).clone();
 							p2 = (PixPoint) elements.get(clickObject.get(i)+1).clone();
 						} catch (CloneNotSupportedException e1) {
-							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
 						
@@ -354,7 +353,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 			return;
 		}
 		
-		
+		System.out.println("createNew"+elements.size());
 		// 创建新的元素
 		newCreate = elements.size();// 新建图像的起始点
 		mouse_Released = false; // 控制虚线框的描绘
@@ -362,10 +361,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		if(paintbrush.getGraphicsType().isEditable()) {
 			clickObject.add(newCreate);
 		}
-//		pointer = Pointer.CREATE_NEW;
-		System.out.println("hahhahahah");
-		
-		System.out.println("newCreate = "+newCreate+", clickObject="+clickObject);
 		try {
 			switch (paintbrush.graphicsType) {
 			case BRUSH:
@@ -388,7 +383,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 
 			}
 		} catch (CloneNotSupportedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		this.updateUI();
@@ -457,7 +451,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 				break;
 			}
 		} catch (CloneNotSupportedException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
@@ -466,7 +459,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 				lefttop = (PixPoint) elements.get(newCreate).clone();
 				rightbottom = (PixPoint) elements.get(newCreate+1).clone();
 			} catch (CloneNotSupportedException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			
@@ -569,7 +561,8 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		keyCode = e.getKeyCode();
 		Vector<PixPoint> elements = layers.get(activeLayer).getElements();
 		KeyBoardContext context = new KeyBoardContext(e);
-		context.set(e, lefttop, rightbottom, clickObject, elements, paintbrush, newCreate, frame, this, elements, activeLayer, layers, pointer);
+		context.set(e, lefttop, rightbottom, clickObject, elements, paintbrush, 
+				newCreate, frame, this, copy, activeLayer, layers, pointer);
 		context.run();
 	}
 
@@ -578,7 +571,6 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		if (!hasActive) {
 			return;
 		}
-		// TODO Auto-generated method stub
 		if (keyCode == 16) {
 			if (paintbrush.getGraphicsType() == Shape.RECTANGLE) {
 				paintbrush.setGraphicsType(Shape.SQUARE);

@@ -9,13 +9,13 @@ import java.io.Serializable;
 public class PaintBrush implements Serializable, Cloneable {
 	public static float[] dash_set = new float[] { 5, 10 }; // 虚线
 	
-	// 画笔颜色
-	Color panColor = Color.black;
-	Color fillColor = new Color(0,0,0,0) ;
-	Shape graphicsType = Shape.BRUSH;  // 图像类型, 可以考虑用枚举  graphicsType=-1代表截断 0 代表画笔 1直线 2矩形
+	Color panColor = Color.black;// 画笔颜色
+	Color fillColor = new Color(0,0,0,0) ; // 填充颜色
+	Shape graphicsType = Shape.BRUSH;  // 图元类型
 	int panSize = 2;   // 画笔大小
-	boolean dash = false;
+	boolean dash = false; // 线条是否是虚线
 	double rotateAngle = 0; // 旋转角
+	
 	public PaintBrush(Color color, Shape type, int size, boolean dash) {
 		this.panColor = color;
 		this.graphicsType = type;
@@ -29,15 +29,12 @@ public class PaintBrush implements Serializable, Cloneable {
 		this.panSize = s;
 	}
 	
-	public PaintBrush() {
-		// TODO Auto-generated constructor stub
-	}
+	public PaintBrush() {}
 	
 	public Color getFillColor() {
 		return fillColor;
 	}
 	public void setFillColor(Color fillColor) {
-		System.out.println("???? setfillcolor"+this.fillColor);
 		this.fillColor = fillColor;
 	}
 	public void setDash(boolean d) {

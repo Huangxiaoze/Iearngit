@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Vector;
@@ -12,10 +13,13 @@ import java.util.Vector;
  * 图层类，保存图层元素
  */
 public class Layer implements Serializable {
+	
+	// 图层图元集合
 	private Vector<PixPoint> elements = new Vector<PixPoint>();
 	
 	// 用于控制当前图层隐藏、显示
 	private boolean active = true;
+	
 	public Vector<PixPoint> getElements() {
 		return elements;
 	}
@@ -42,6 +46,8 @@ public class Layer implements Serializable {
 	 * 
 	 */
 	public void draw(Graphics2D g2d, Graphics g, boolean drawFrame, Vector<Integer> clickObject, PixPoint p0, PixPoint p00) {
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		
 	    if(clickObject.size()>1) { // 选中多个元素		
 	    	drawEditorFrame(p0, p00, g2d, Color.red, Color.cyan);
 	    }
@@ -65,9 +71,9 @@ public class Layer implements Serializable {
         	if(p1.paintbrush.dash) {
         		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f,PaintBrush.dash_set,0.0f);	     		
         	} else {
-        		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL);	  		
+        		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_SQUARE,BasicStroke.JOIN_MITER);	  		
         	}
-
+        	
         	g2d.setColor(p1.paintbrush.panColor);
         	g2d.setStroke(size);
         	
@@ -108,7 +114,7 @@ public class Layer implements Serializable {
         	if(p1.paintbrush.dash) {
         		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER,10.0f,PaintBrush.dash_set,0.0f);	     		
         	} else {
-        		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL);	  		
+        		size = new BasicStroke(p1.paintbrush.panSize,BasicStroke.CAP_SQUARE,BasicStroke.JOIN_MITER);	  		
         	}
 
         	g2d.setColor(p1.paintbrush.panColor);
@@ -155,6 +161,7 @@ public class Layer implements Serializable {
         	
         }
         
+        
 	}
     /*
      * 绘制编辑框，8个方向对图形元素进行长宽变换
@@ -175,7 +182,6 @@ public class Layer implements Serializable {
     	size = new BasicStroke(2,BasicStroke.CAP_BUTT,BasicStroke.JOIN_BEVEL);
     	g2d.setStroke(size);
     	g2d.setColor(pointColor);
-//    	g2d.setColor(Color.cyan);
     	g2d.drawArc(p1.x-1, p1.y-1, 2, 2, 0, 360); // 左上角
     	g2d.drawArc(p1.x-1, p2.y-1, 2, 2, 0, 360); // 左下角
     	g2d.drawArc(p2.x-1, p1.y-1, 2, 2, 0, 360); // 右上角
@@ -191,3 +197,11 @@ public class Layer implements Serializable {
 	
 	
 }
+
+
+//// 4. 绘制一个多边形(收尾相连): 点(140, 150), 点(180, 250), 点(220, 200)
+//int[] xPoints = new int[] { 140, 180, 220};
+//int[] yPoints = new int[] { 150,  250, 200};
+//int nPoints = 3;
+//g2d.drawPolygon(xPoints, yPoints, nPoints);
+//g2d.dispose();

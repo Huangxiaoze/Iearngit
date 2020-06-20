@@ -9,7 +9,8 @@ import java.awt.Toolkit;
  * ÷∏’Î∫¨“Â¿‡
  */
 public enum Pointer {
-	MOVE, W_RESIZE, E_RESIZE, N_RESIZE, S_RESIZE, NW_RESIZE, NE_RESIZE, SW_RESIZE, SE_RESIZE, CREATE_NEW, ROTATE;
+	MOVE, W_RESIZE, E_RESIZE, N_RESIZE, S_RESIZE, NW_RESIZE, 
+	NE_RESIZE, SW_RESIZE, SE_RESIZE, CREATE_NEW, ROTATE;
 }
 
 enum Position {
@@ -42,26 +43,5 @@ enum Position {
 			 return null;
 		}
 	}
-	
-	
-//	 {
-//		Toolkit kit=Toolkit.getDefaultToolkit();
-//		Image img = null;
-//		Cursor mouse = null;
-//		if(this == BRUSH) {
-//			img=kit.getImage(Editor.IMGURL+"brush_small.png");
-//			mouse=kit.createCustomCursor(img, new Point(2,30), "stick");
-//		} else if(this == ERASER) {
-//			img=kit.getImage(Editor.IMGURL+"eraser.png");
-//			mouse=kit.createCustomCursor(img, new Point(7,28), "stick");
-//		} else if(this == FILLCOLOR) {
-//			img=kit.getImage(Editor.IMGURL+"fillcolor.png");
-//			mouse=kit.createCustomCursor(img, new Point(2,30), "stick");
-//		} else {
-//			mouse = Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
-//		}
-//		
-//		return mouse;
-//	}
 
 }

@@ -115,16 +115,16 @@ class CtrlD extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		if (!elements.isEmpty() && newCreate >= 0) {
-			PixPoint p1 = elements.get(newCreate);
-			if (p1.paintbrush.getGraphicsType().isEditable()) {
-				elements.remove(newCreate + 1);
-				elements.remove(newCreate);
-				editorpanel.place();
-				editorpanel.updateUI();
-			}
+		Vector<PixPoint> all = new Vector<PixPoint>();
+		for(Integer c: clickObject) {
+			all.add(elements.get(c));
+			all.add(elements.get(c+1));
+			all.add(elements.get(c+2));
 		}
+		elements.removeAll(all);
+		clickObject.clear();
+		editorpanel.place();
+		editorpanel.updateUI();	
 	}
 	
 }
@@ -133,8 +133,7 @@ class CtrlC extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		copy = new Vector<PixPoint>();
+		copy.clear();
 		PixPoint p1 = null, p2 = null;
 		int offset = -50;
 		for(Integer c: clickObject) {
@@ -144,7 +143,6 @@ class CtrlC extends KeyBoard {
 				p2 = (PixPoint) elements.get(c+1).clone();
 				
 			} catch (CloneNotSupportedException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			int deltax = p2.x - p1.x;
@@ -165,8 +163,6 @@ class CtrlV extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		System.out.println("???"+copy);
 		if(copy!=null&&copy.size()!=0) {
 			elements.addAll(copy);
 			editorpanel.updateUI();
@@ -179,14 +175,22 @@ class CtrlZ extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
+		System.out.println("hello");
 		Layer layer = layers.get(activeLayer);
 		int start = newCreate;
-		if (pointer == Pointer.CREATE_NEW) {
+		boolean candel = true;
+		if(clickObject.size()>1) return;
+		for(int i=start+1;i<elements.size();i++) {
+			if(elements.get(i).paintbrush.getGraphicsType() == Shape.CUT && i!=elements.size()-1) {
+				candel = false;
+			}
+		}
+		if(candel) {
 			editorpanel.place();
 			layer.removeElementFrom(start);
 			editorpanel.updateUI();
 		}
+		
 	}
 	
 }
@@ -195,11 +199,10 @@ class CtrlS extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		if (frame.openFilePath == null) {
 			frame.dump();
 		} else {
-			frame.saveFile(frame.openFilePath);
+			FileManager.saveFile(frame.openFilePath, layers);
 		}
 	}
 	
@@ -209,7 +212,6 @@ class CtrlUp extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		for(Integer c: clickObject) {
 			PixPoint p1 = elements.get(c);
 			PixPoint p2 = elements.get(c+1);
@@ -232,7 +234,6 @@ class CtrlDown extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		for(Integer c: clickObject) {
 			PixPoint p1 = elements.get(c);
 			PixPoint p2 = elements.get(c+1);
@@ -256,7 +257,6 @@ class CtrlLeft extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		for(Integer c: clickObject) {
 			PixPoint p1 = elements.get(c);
 			PixPoint p2 = elements.get(c+1);
@@ -280,7 +280,6 @@ class CtrlRight extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		for(Integer c: clickObject) {
 			PixPoint p1 = elements.get(c);
 			PixPoint p2 = elements.get(c+1);
@@ -304,7 +303,6 @@ class Ctrl0 extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		for(Integer c: clickObject) {   // 0
 			PixPoint p1 = elements.get(c);
 			PixPoint p2 = elements.get(c+1);
@@ -335,7 +333,6 @@ class Ctrl1 extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		for(Integer c: clickObject) {   // 0
 			PixPoint p1 = elements.get(c);
 			PixPoint p2 = elements.get(c+1);
@@ -366,7 +363,6 @@ class Ctrl5 extends KeyBoard {
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
 		for(Integer c: clickObject) {   // 0
 			PixPoint p1 = elements.get(c);
 			PixPoint p2 = elements.get(c+1);

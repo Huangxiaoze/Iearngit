@@ -33,7 +33,9 @@ class ShapeFactory {
  * 图形元素枚举类
  */
 public enum Shape {
-	LINE(true), CIRCLE(true), OVAL(true), RECTANGLE(true), SQUARE(true), BRUSH(false), CUT(false), ERASER(false), FILLCOLOR(false);
+	LINE(true), CIRCLE(true), OVAL(true), RECTANGLE(true), 
+	SQUARE(true), BRUSH(false), CUT(false), ERASER(false), FILLCOLOR(false);
+	
 	private boolean editable;
 	Shape(boolean editable){
 		this.editable = editable;

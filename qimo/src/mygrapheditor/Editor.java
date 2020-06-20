@@ -15,7 +15,7 @@ import javax.imageio.stream.FileImageInputStream;
 import javax.swing.*;
 
 public class Editor extends JFrame implements ActionListener {
-	// 
+	// 文件路径
 	public static final String IMGURL = "./image/";
 	public static final String FILEURL = "./file/";
 	
@@ -27,19 +27,14 @@ public class Editor extends JFrame implements ActionListener {
 	
 	// 图层布局控制
 	JPanel layerPanel = new JPanel();
-	// 图形类别
-	int graphicsType = 0;
+	
 	// 图层的添加删除
 	boolean layerAdd = true;
-	Color activebtnColor = new Color(218,180,156);
-	Color normalbtnColor = new Color(141,124,124);
-	// 文件输入输出流
-	FileInputStream inFileInputStream = null;
-	FileOutputStream outFileOutputStream = null;
-	// 序列化，导入导出图像关键的一个API
-	ObjectInputStream inObjectInputStream = null;
-	ObjectOutputStream outObjectOutputStream = null;
 	
+	// 活跃图层按钮背景色
+	Color activebtnColor = new Color(218,180,156);
+	// 普通图层按钮背景色
+	Color normalbtnColor = new Color(141,124,124);
 	
 	// 导入导出文件对话框
 	FileDialog loadDialog = new FileDialog(this,"loadDialog",FileDialog.LOAD);
@@ -218,65 +213,67 @@ public class Editor extends JFrame implements ActionListener {
 		}
 	}
 	
-	public void load() {
+	public void load() { // 导入文件
 		loadDialog.setVisible(true);
-		if (loadDialog.getFile()!=null) {
-			
-			try {
-				
-
-				File file = new File(loadDialog.getDirectory(), loadDialog.getFile());
-				inFileInputStream = new FileInputStream(file);
-				inObjectInputStream = new ObjectInputStream(inFileInputStream);
-				Vector<Layer> elements = (Vector<Layer>) inObjectInputStream.readObject(); // 从文件中获取对象
-				
-				
-				this.setLayerPanel(elements);
-				
-				openFilePath = loadDialog.getDirectory()+loadDialog.getFile();
-				
-				inFileInputStream.close();
-				inObjectInputStream.close();
-				
-	
-			} catch (FileNotFoundException e1) {
-				e1.printStackTrace();
-			}catch (IOException e1) {
-				e1.printStackTrace();
-			} catch (ClassNotFoundException e1) {
-				e1.printStackTrace();
-			}
-		}	
-	}
-	
-	public void saveFile(String path) {
-		try {
-			File file = new File(path);
-			outFileOutputStream = new FileOutputStream(file);
-			outObjectOutputStream = new ObjectOutputStream(outFileOutputStream); 
-			outObjectOutputStream.writeObject(drawingBoard.getLayers());  // 将图形对象导出到文件
-			outFileOutputStream.close();
-			outObjectOutputStream.close();
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		}catch (IOException e1) {
-			e1.printStackTrace();
+		if(loadDialog.getFile()!=null) {
+			openFilePath = loadDialog.getDirectory()+loadDialog.getFile();
+			Vector<Layer> elements = FileManager.loadFile(openFilePath);
+			this.setLayerPanel(elements);
 		}
 	}
 	
-	public void dump() {
+	public void dump() { // 导出文件
 		dumpDialog.setVisible(true);
 		if (dumpDialog.getFile()!=null) {
 			if(openFilePath==null) {
 				openFilePath = dumpDialog.getDirectory()+dumpDialog.getFile();
 			}			
-			saveFile(dumpDialog.getDirectory()+dumpDialog.getFile());
+			FileManager.saveFile(dumpDialog.getDirectory()+dumpDialog.getFile(), drawingBoard.getLayers());
 		}	
 	}
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		boolean islayer = operateLayer(e);
+		if(islayer) {
+			revalidateLayer();
+			return;
+		}
+		
+		String[] cmds = {
+				"new", "load", "dump", "fillcolor", "colorpicker", 
+				"raisePanSize", "decreasePanSize", "dashControl", "clearCurLayer",
+				"clearLayer", "newLayer", "delLayer", "delLayer"
+		};
+		
+		int cmd = -1;
+		for(int i=0;i<cmds.length;i++) {
+			if(cmds[i].equals(e.getActionCommand())) {
+				cmd = i;
+				break;
+			}
+		}
+		switch(cmd) {
+		case 0: break;
+		case 1: load();break;
+		case 2: dump();break;
+		case 3: setFillColor(e);break;
+		case 4: setPanColor(e);break;
+		case 5: drawingBoard.raisePanSize();break;
+		case 6: drawingBoard.decreasePanSize();break;
+		case 7: setDash(e); break;
+		case 8: drawingBoard.clearCurLayer();break;
+		case 9: clearLayerPanel();break;
+		case 10: newLayer();break;
+		case 11: break;
+		default: setShape(e.getActionCommand());break;
+		}
+
+	}
+	/*
+	 * 图层显示、隐藏
+	 */
+	private boolean operateLayer(ActionEvent e) {
 		String cmd = e.getActionCommand();
-		System.out.println(e.getActionCommand());
 		boolean islayer = false;
 		for(int i=0;i<jbs.size();i++) {
 			if(cmd.equals("layer"+(i+1))) {
@@ -291,77 +288,68 @@ public class Editor extends JFrame implements ActionListener {
 			} else if(cmd.equals("jcb"+(i+1))) {
 				islayer = true;
 				JCheckBox jcb = (JCheckBox)e.getSource();
-				System.out.println("Jcb");
 				drawingBoard.setLayerActiveProperty(i, jcb.isSelected());
 			}
-		}
-
-		if(islayer) {
-			revalidateLayer();
-			return;
-		}
-		
-		
-		if(e.getActionCommand().equals("new")) {
-			
-		} else if(e.getActionCommand().equals("load")) { // 导入图像
-			load();
-		} else if(e.getActionCommand().equals("dump")) { // 导出图像
-			dump();		
-		} else if (cmd.equals("fillcolor")) {
-//			drawingBoard.place();
-			Color newColor = JColorChooser.showDialog(this, "填充色", drawingBoard.paintbrush.getPanColor());
-			drawingBoard.setFillColor(newColor);
-			JButton btn = (JButton)e.getSource();
-			btn.setBackground(newColor);		
-			
-		} else if (e.getActionCommand().equals("colorpicker")) {
-			Color newColor = JColorChooser.showDialog(this, "画笔颜色", drawingBoard.paintbrush.getPanColor());
-			drawingBoard.paintbrush.setPanColor(newColor);
-			JButton btn = (JButton)e.getSource();
-			btn.setBackground(newColor);
-			
-		} else if (e.getActionCommand().equals("raisePanSize")) {
-			drawingBoard.raisePanSize();
-			
-		} else if (e.getActionCommand().equals("decreasePanSize")) {
-			drawingBoard.decreasePanSize();
-			
-		} else if (e.getActionCommand().equals("dashControl")) {
-			JMenuItem dash = (JMenuItem) e.getSource();
-			if(drawingBoard.paintbrush.getDash() == true) {
-				dash.setText("虚线");
-				drawingBoard.paintbrush.setDash(false);
-			} else {
-				dash.setText("实线");
-				drawingBoard.paintbrush.setDash(true);
-			}
-			
-		} else if(cmd.equals("clearCurLayer")) {
-			drawingBoard.clearCurLayer();
-			
-		} else if (e.getActionCommand().equals("clearLayer")) {
-			clearLayerPanel();
-			drawingBoard.clearLayer();
-			drawingBoard.place();
-			revalidate();
-			
-		} else if (cmd.equals("newLayer")) {
-			layerPanel.add(makeLayer("图层"+(drawingBoard.getLayersSize()+1),drawingBoard.getLayersSize()+1, true));
-			drawingBoard.createNewLayer();
-			revalidateLayer();
-		} else {
-			Shape s = null;
-			try {
-				s = ShapeFactory.getShape(e.getActionCommand());
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-			drawingBoard.paintbrush.setGraphicsType(s);
-			drawingBoard.place();
-		}
+		}	
+		return islayer;
+	}
+	/*
+	 * 设置填充颜色
+	 */
+	private void setFillColor(ActionEvent e) {
+		Color newColor = JColorChooser.showDialog(this, "填充色", drawingBoard.paintbrush.getPanColor());
+		drawingBoard.setFillColor(newColor);
+		JButton btn = (JButton)e.getSource();
+		btn.setBackground(newColor);		
 		
 	}
+	/*
+	 * 设置画笔颜色
+	 */
+	private void setPanColor(ActionEvent e) {
+		Color newColor = JColorChooser.showDialog(this, "画笔颜色", drawingBoard.paintbrush.getPanColor());
+		drawingBoard.setPanColor(newColor);
+		JButton btn = (JButton)e.getSource();
+		btn.setBackground(newColor);
+	}
+	/*
+	 * 设置画笔虚实
+	 */
+	private void setDash(ActionEvent e) {
+		JMenuItem dash = (JMenuItem) e.getSource();
+		if(drawingBoard.paintbrush.getDash() == true) {
+			dash.setText("虚线");
+			drawingBoard.setDash(false);
+		} else {
+			dash.setText("实线");
+			drawingBoard.setDash(true);
+		}
+	}
+	/*
+	 * 添加新图层
+	 */
+	private void newLayer() {
+		layerPanel.add(makeLayer("图层"+(drawingBoard.getLayersSize()+1),drawingBoard.getLayersSize()+1, true));
+		drawingBoard.createNewLayer();
+		revalidateLayer();	
+	}
+	
+	/*
+	 * 设置图元
+	 */
+	private void setShape(String cmd) {
+		Shape s = null;
+		try {
+			s = ShapeFactory.getShape(cmd);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		drawingBoard.paintbrush.setGraphicsType(s);
+		drawingBoard.place();	
+	}
+	/*
+	 * 导入文件时设置图层显示
+	 */
 	private void setLayerPanel(Vector<Layer> elements) {
 		clearLayerPanel();
 		for(int i=0;i<elements.size();i++) {
@@ -370,10 +358,16 @@ public class Editor extends JFrame implements ActionListener {
 		drawingBoard.setLayers(elements);
 		revalidateLayer();
 	}
+	/*
+	 * 清空所有图层
+	 */
 	private void clearLayerPanel() {
 		layerPanel.removeAll();
 		jcbs = new Vector<JCheckBox>();
 		jbs = new Vector<JButton>();	
+		drawingBoard.clearLayer();
+		drawingBoard.place();
+		revalidate();
 	}
 	
 }
