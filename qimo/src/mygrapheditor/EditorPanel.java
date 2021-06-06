@@ -112,7 +112,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		confirmPlace = true;
 		isResize = false;
 		pointer = Pointer.CREATE_NEW;
-		System.out.println("??/");
+		// system.out.println("??/");
 		this.updateUI();
 	}
 
@@ -181,7 +181,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 	}
 
 	public void clearCurLayer() {
-		System.out.println("clearCurLayer");
+		// system.out.println("clearCurLayer");
 		this.place();
 		if (this.layers.size() == 0) {
 			return;
@@ -287,7 +287,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 					this.updateUI();
 				}
 			} else { // 处于编辑元素模式
-				System.out.println("editObj="+editObj);
+				// system.out.println("editObj="+editObj);
 				this.place(); // 将先前的元素放下
 				if(editObj!=-1) { // 有元素包含该点
 					if(!clickObject.contains(editObj)) {// 该元素未被添加到编辑队列中
@@ -295,7 +295,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 					}
 					confirmPlace = false; // 设置为元素未放下状态		
 					newCreate = editObj;
-					System.out.println("----------");
+					// system.out.println("----------");
 					// 更新包含所有编辑元素的矩形编辑框，左上角，右下角
 					for(int i=0;i<clickObject.size();i++) {
 
@@ -310,7 +310,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 						rightbottom.move(Math.max(rightbottom.x, p2.x), Math.max(rightbottom.y, p2.y));
 					}
 					
-					System.out.println("mousePress"+clickObject);
+					// system.out.println("mousePress"+clickObject);
 				} 
 			}
 			this.updateUI();
@@ -334,7 +334,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 			isResize = true;
 			// 获取鼠标按下点在编辑框的位置
 			Position  pos = getPosition(lefttop, rightbottom, e, 20);
-			System.out.println(pos);
+			// system.out.println(pos);
 			switch(pos) {
 			case INNER:pointer = Pointer.MOVE;break;
 			case NW:pointer = Pointer.NW_RESIZE;break;
@@ -353,7 +353,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 			return;
 		}
 		
-		System.out.println("createNew"+elements.size());
+		// system.out.println("createNew"+elements.size());
 		// 创建新的元素
 		newCreate = elements.size();// 新建图像的起始点
 		mouse_Released = false; // 控制虚线框的描绘
@@ -505,7 +505,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 		if (!hasActive) {
 			return;
 		}
-		System.out.println("mouseRelease" + ", " + isResize + ", " + confirmPlace);
+		// system.out.println("mouseRelease" + ", " + isResize + ", " + confirmPlace);
 
 		Vector<PixPoint> elements = layers.get(activeLayer).getElements();
 
@@ -554,7 +554,7 @@ public class EditorPanel extends JPanel implements MouseListener, MouseMotionLis
 	Vector<PixPoint> copy = new Vector<PixPoint>();
 	@Override
 	public void keyPressed(KeyEvent e) {
-//		System.out.println(e);
+//		// system.out.println(e);
 		if (!hasActive) {
 			return;
 		}

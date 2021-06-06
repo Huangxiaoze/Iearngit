@@ -175,7 +175,7 @@ class CtrlZ extends KeyBoard {
 
 	@Override
 	public void run() {
-		System.out.println("hello");
+		// system.out.println("hello");
 		Layer layer = layers.get(activeLayer);
 		int start = newCreate;
 		boolean candel = true;

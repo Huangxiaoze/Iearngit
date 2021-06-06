@@ -106,7 +106,7 @@ public class Editor extends JFrame implements ActionListener {
 	}
 	private void initTopToolBar() {
 		String[][] args = {
-				{"新建","new", "新建图像文件"},
+				//{"新建","new", "新建图像文件"},
 				{"导入", "load", "导入图像对象"},
 				{"导出", "dump", "导出图像对象"},
 				{"清空图层", "clearCurLayer", "清空当前活跃图层"},
